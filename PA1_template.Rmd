@@ -5,21 +5,54 @@ output:
     keep_md: true
 ---
 
-
 ## Loading and preprocessing the data
+```{r}
+data <- read.csv("activity.csv")
 
-
+library(data.table)
+data = data.table(data)
+```
 
 ## What is mean total number of steps taken per day?
-
-
+```{r}
+hdata <- aggregate(data$steps, by=list(Date=data$date), FUN=sum, na.rm = TRUE)
+hist(hdata$x, xlab = "Steps", main = "Steps Taken Each Day")
+summary(hdata) #Mean and Median
+```
 
 ## What is the average daily activity pattern?
+```{r}
+plotdata <- data[, list(steps=sum(steps, na.rm = TRUE)), by=interval]
+with(plotdata, plot(interval, steps, type="l"))
 
-
+data[which.max(data$steps)]
+```
 
 ## Imputing missing values
+```{r}
+sum(is.na(data$steps))
 
+dt2 <- merge(data, data[, list(mean=mean(steps, na.rm = TRUE)), by=interval], by = "interval")
+dt2$steps <- as.double(dt2$steps)
+dt2[is.na(dt2$steps), "steps"] <- dt2[is.na(dt2$steps), mean]
 
+hdata2 <- sapply(split(dt2$steps, dt2$date), sum)
+mdata2 <- melt(hdata2)
+hist(mdata2$value, xlab = "Steps", main = "Steps Taken Each Day")
+summary(mdata2)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+dt2$date <- as.Date(dt2$date)
+dt2$Weekday.or.Weekend <- ifelse(weekdays(dt2$date) == "Saturday" |
+                                      weekdays(dt2$date) == "Sunday", "Weekend", "Weekday")
+
+plotdata2 <- split(dt2, dt2$Weekday.or.Weekend)
+plota <- plotdata2$Weekday[, list(steps=mean(steps, na.rm = TRUE)), by=interval]
+plotb <- plotdata2$Weekend[, list(steps=mean(steps, na.rm = TRUE)), by=interval]
+
+par(mfrow = c(2, 1))
+with(plota, plot(interval, steps, type="l", main="Weekday", ylab = "Number of Steps", xlab = "Interval"))
+with(plotb, plot(interval, steps, type="l", main="Weekend", ylab = "Number of Steps", xlab = "Interval"))
+```
