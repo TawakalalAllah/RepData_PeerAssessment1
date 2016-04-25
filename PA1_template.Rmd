@@ -30,6 +30,8 @@ data[which.max(data$steps)]
 
 ## Imputing missing values
 ```{r}
+#Strategy for filling in all of the missing values in the dataset will be simply to use mean for that 5-minute interval.
+
 sum(is.na(data$steps))
 
 dt2 <- merge(data, data[, list(mean=mean(steps, na.rm = TRUE)), by=interval], by = "interval")
